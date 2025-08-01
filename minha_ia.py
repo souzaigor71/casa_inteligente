@@ -5,7 +5,6 @@ import logging
 import json
 import requests
 from datetime import datetime
-import asyncio
 from telegram import Bot, Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (
     Application,
@@ -16,27 +15,21 @@ from telegram.ext import (
     ConversationHandler,
 )
 
-# ==============================================
-# Configurações Principais
-# ==============================================
-TELEGRAM_TOKEN = "7935642070:AAE9wKMJf1zBlRgmuXUsQom6wPPJ96_n0F8"
-OPENWEATHER_API_KEY = "SUA_CHAVE_API"
+# Token do bot via variável de ambiente
+TELEGRAM_TOKEN = os.environ.get('IA_BOT_TOKEN')
+if not TELEGRAM_TOKEN:
+    raise ValueError("IA_BOT_TOKEN não encontrado nas variáveis de ambiente!")
+
 bot = Bot(token=TELEGRAM_TOKEN)
 DATA_DIR = "user_data"
 os.makedirs(DATA_DIR, exist_ok=True)
 
-# ==============================================
-# Estados da Conversa
-# ==============================================
 (
     CHOOSING, TEXT_GENERATION, SENTIMENT_ANALYSIS,
     TRANSLATION, QUESTION_ANSWERING, LEARNING_MODE,
     WEATHER_INFO
 ) = range(7)
 
-# ==============================================
-# Sistema de Personalidade da IA
-# ==============================================
 class IAPersonality:
     def __init__(self):
         self.traits = {
@@ -55,15 +48,11 @@ class IAPersonality:
 
 IA_PERSONA = IAPersonality()
 
-# ==============================================
-# Handlers Essenciais (Corrigidos)
-# ==============================================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     reply_keyboard = [
         ["Geração de Texto", "Análise de Sentimentos"],
         ["Modo Aprendizado", "Clima"]
     ]
-    
     await update.message.reply_text(
         IA_PERSONA.personalize("Escolha uma função:"),
         reply_markup=ReplyKeyboardMarkup(
@@ -92,9 +81,6 @@ async def choice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("Opção inválida!")
         return CHOOSING
 
-# ==============================================
-# Funcionalidades Principais
-# ==============================================
 async def generate_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_text = update.message.text
     response = f"📝 Você disse: {user_text}"
@@ -134,12 +120,8 @@ async def set_profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     else:
         await update.message.reply_text("Formato: /sobre_mim [Nome] [Pets]")
 
-# ==============================================
-# Configuração do Bot (Corrigida)
-# ==============================================
 def main():
     application = Application.builder().token(TELEGRAM_TOKEN).build()
-
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
@@ -152,11 +134,10 @@ def main():
         fallbacks=[CommandHandler("cancel", cancel)],
         allow_reentry=True
     )
-
     application.add_handler(conv_handler)
     application.add_handler(CommandHandler("sobre_mim", set_profile))
     
-    print("✅ Bot operacional!")
+    print("✅ Bot IA operacional!")
     application.run_polling()
 
 if __name__ == '__main__':
